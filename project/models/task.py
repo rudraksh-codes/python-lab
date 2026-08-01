@@ -1,8 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from typing import ClassVar, Optional
 
 
 from uuid import uuid4
+
+class TaskNotFoundError(BaseException):
+    pass 
 
 @dataclass(eq=False)
 class Task:
@@ -15,6 +19,13 @@ class Task:
     - status must be valid
     - due_date cannot be before creation
     """
+
+    VALID_STATUS: ClassVar[set[str]] = {
+        "Todo",
+        "In Progress",
+        "Completed",
+        "Blocked"
+    }
 
     id: str = field(default_factory=lambda: str(uuid4()))
 
@@ -205,3 +216,72 @@ class RecurringTask(Task):
             f"recurrence_days={self.recurrence_days}"
             ")"
         )
+
+
+#method resolution order (MRO) ? 
+# kese kese vo method ko lene k liye classes me penetrate karega
+
+
+# eg: RecurringTask.__post_init__() 
+
+# RecurringTask
+# then
+# RecurringTask will call super().__post_init__() 
+# then 
+# Task.__post_init__()
+
+print(RecurringTask.__mro__)
+
+# (<class '__main__.RecurringTask'>, <class '__main__.Task'>, <class 'object'>)
+
+
+
+# WHY INHERITANCE ? 
+
+# RecurringTask is also a Task only
+# -it simply extends the behaviour of Task
+
+#inheritance is applicable here cuz RecurringTask is just a s
+# specific version of Task only...
+
+
+
+# WHY SUPER()?? 
+
+# super() allows to reuse the methods like super().__post_init__()
+# instead of duplicating validation 
+
+# DRY principle followed(dont repeat yourself)
+
+
+from datetime import datetime, timedelta
+
+task = Task(
+    title="Build Authentication",
+    description="JWT Login",
+    due_date=datetime.now() + timedelta(days=2),
+    priority=2
+)
+
+print(task)
+
+print(task.is_overdue)
+
+task.mark_completed()
+
+print(task)
+
+print(len(task))
+
+print(hash(task))
+
+
+recurring = RecurringTask(
+    title="Weekly Backup",
+    due_date=datetime.now() + timedelta(days=7),
+    recurrence_days=7
+)
+
+print(recurring)
+
+print(recurring.next_occurence())
